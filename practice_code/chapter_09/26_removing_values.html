@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>D3: Adding values and elements to a chart</title>
+        <title>D3: Removing values from a chart</title>
         <script type="text/javascript" src="../d3/d3.v3.js"></script>
         <style type="text/css">
             /* No style */
@@ -10,7 +10,7 @@
     </head>
     <body>
 
-        <p>Click on this text to update the chart with new data values as many times as you like!</p>
+        <p>Click on this text to remove a data value from the chart!</p>
 
         <script type="text/javascript">
 
@@ -80,19 +80,16 @@
             d3.select("p")
                     .on("click", function () {
 
-                        // Add one new value to dataset
-                        var maxValue = 25;
-                        var newNumber = Math.floor(Math.random() * maxValue);
-                        dataset.push(newNumber);
+                        // Remove one value from dataset
+                        dataset.shift();
 
                         // Update scale domains
                         xScale.domain(d3.range(dataset.length));
                         yScale.domain([0, d3.max(dataset)]);
 
-                        // Select all bars
-                        var bars = svg.selectAll("rect")            // Select all bars
-                                .data(dataset);                     // Re-bind data to existing bars, return the "update" selection
-                                                                    // 'bars' is now the update selection
+                        // Select...
+                        var bars = svg.selectAll("rect")
+                                .data(dataset);
 
                         // Enter...
                         bars.enter()
@@ -100,6 +97,10 @@
                                 .attr("x", w)
                                 .attr("y", function (d) {
                                     return h - yScale(d);
+                                })
+                                .attr("width", xScale.rangeBand())
+                                .attr("height", function (d) {
+                                    return yScale(d);
                                 })
                                 .attr("fill", function (d) {
                                     return "rgb(0, 0, " + (d * 10) + ")";
@@ -119,10 +120,18 @@
                                     return yScale(d);
                                 });
 
-                        // Add each labels with click
+                        // Exit...
+                        bars.exit()
+                                .transition()
+                                .duration(500)
+                                .attr("x", w)
+                                .remove();
+
+
+                        // Update all labels
                         // Select...
                         var labels = svg.selectAll("text")
-                                .data(dataset)
+                                .data(dataset);
 
                         // Enter...
                         labels.enter()
@@ -151,6 +160,12 @@
                                     return h - yScale(d) + 14;
                                 });
 
+                        // Exit...
+                        labels.exit()
+                                .transition()
+                                .duration(500)
+                                .attr("x", w)
+                                .remove();
 
                     });
 

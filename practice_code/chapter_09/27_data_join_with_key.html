@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title>D3: Adding values and elements to a chart</title>
+        <title>D3: Data join with key</title>
         <script type="text/javascript" src="../d3/d3.v3.js"></script>
         <style type="text/css">
             /* No style */
@@ -10,24 +10,45 @@
     </head>
     <body>
 
-        <p>Click on this text to update the chart with new data values as many times as you like!</p>
+        <p>Click on this text to remove a data value from the chart!</p>
 
         <script type="text/javascript">
+
+            // Dataset is an array of objects ==> so it would be changed to 'key' or 'value'
 
             // Width and height
             var w = 600;
             var h = 250;
 
-            var dataset = [ 5, 10, 13, 19, 21, 25, 22, 18, 15, 13,
-                            11, 12, 15, 20, 18, 17, 16, 18, 23, 25 ];
+            var dataset = [ { player_id: 0, value: 5 },
+                            { player_id: 1, value: 10 },
+                            { player_id: 2, value: 13 },
+                            { player_id: 3, value: 19 },
+                            { player_id: 4, value: 21 },
+                            { player_id: 5, value: 25 },
+                            { player_id: 6, value: 22 },
+                            { player_id: 7, value: 18 },
+                            { player_id: 8, value: 11 },
+                            { player_id: 9, value: 13 },
+                            { player_id: 10, value: 20 },
+                            { player_id: 11, value: 17 },
+                            { player_id: 12, value: 19 },
+                            { player_id: 13, value: 16 },
+                            { player_id: 14, value: 23 },
+                            { player_id: 15, value: 12 } ];
 
             var xScale = d3.scale.ordinal()
                     .domain(d3.range(dataset.length))
                     .rangeRoundBands([0, w], 0.05);
 
             var yScale = d3.scale.linear()
-                    .domain([0, d3.max(dataset)])
+                    .domain([0, d3.max(dataset, function (d) { return d.value; })])
                     .range([0, h]);
+
+            // Define key function, to be used when binding data
+            var key = function (d) {
+                return d.player_id;
+            };
 
             // Create SVG element
             var svg = d3.select("body")
@@ -37,37 +58,37 @@
 
             // Create bars
             svg.selectAll("rect")
-                    .data(dataset)
+                    .data(dataset, key)             // Bind data with custom key function
                     .enter()
                     .append("rect")
                     .attr("x", function (d, i) {
                         return xScale(i);
                     })
                     .attr("y", function (d) {
-                        return h - yScale(d);
+                        return h - yScale(d.value);
                     })
                     .attr("width", xScale.rangeBand())
                     .attr("height", function (d) {
-                        return yScale(d);
+                        return yScale(d.value);
                     })
                     .attr("fill", function (d) {
-                        return "rgb(0, 0, " + (d * 10) + ")";
+                        return "rgb(0, 0, " + (d.value * 10) + ")";
                     });
 
             // Create labels
             svg.selectAll("text")
-                    .data(dataset)
+                    .data(dataset, key)             // Bind data with custom key function
                     .enter()
                     .append("text")
                     .text(function (d) {
-                        return d;
+                        return d.value;
                     })
                     .attr("text-anchor", "middle")
                     .attr("x", function (d, i) {
                         return xScale(i) + xScale.rangeBand() / 2;
                     })
                     .attr("y", function (d) {
-                        return h - yScale(d) + 14;
+                        return h - yScale(d.value) + 14;
                     })
                     .attr("font-family", "sans-serif")
                     .attr("font-size", "11px")
@@ -80,29 +101,30 @@
             d3.select("p")
                     .on("click", function () {
 
-                        // Add one new value to dataset
-                        var maxValue = 25;
-                        var newNumber = Math.floor(Math.random() * maxValue);
-                        dataset.push(newNumber);
+                        // Remove one value from dataset
+                        dataset.shift();
 
                         // Update scale domains
                         xScale.domain(d3.range(dataset.length));
-                        yScale.domain([0, d3.max(dataset)]);
+                        yScale.domain([0, d3.max(dataset, function (d) { return d.value; })]);
 
-                        // Select all bars
-                        var bars = svg.selectAll("rect")            // Select all bars
-                                .data(dataset);                     // Re-bind data to existing bars, return the "update" selection
-                                                                    // 'bars' is now the update selection
+                        // Select...
+                        var bars = svg.selectAll("rect")
+                                .data(dataset, key);
 
                         // Enter...
                         bars.enter()
                                 .append("rect")
                                 .attr("x", w)
                                 .attr("y", function (d) {
-                                    return h - yScale(d);
+                                    return h - yScale(d.value);
+                                })
+                                .attr("width", xScale.rangeBand())
+                                .attr("height", function (d) {
+                                    return yScale(d.value);
                                 })
                                 .attr("fill", function (d) {
-                                    return "rgb(0, 0, " + (d * 10) + ")";
+                                    return "rgb(0, 0, " + (d.value * 10) + ")";
                                 });
 
                         // Update...
@@ -112,30 +134,38 @@
                                     return xScale(i);
                                 })
                                 .attr("y", function (d) {
-                                    return h - yScale(d);
+                                    return h - yScale(d.value);
                                 })
                                 .attr("width", xScale.rangeBand())
                                 .attr("height", function (d) {
-                                    return yScale(d);
+                                    return yScale(d.value);
                                 });
 
-                        // Add each labels with click
+                        // Exit...
+                        bars.exit()
+                                .transition()
+                                .duration(500)
+                                .attr("x", -xScale.rangeBand())  // <-- Exit stage left
+                                .remove();
+
+
+                        // Update all labels
                         // Select...
                         var labels = svg.selectAll("text")
-                                .data(dataset)
+                                .data(dataset, key);
 
                         // Enter...
                         labels.enter()
                                 .append("text")
                                 .text(function (d) {
-                                    return d;
+                                    return d.value;
                                 })
                                 .attr("text-anchor", "middle")
                                 .attr("x", function (d, i) {
                                     return xScale(i) + xScale.rangeBand() / 2;
                                 })
                                 .attr("y", function (d) {
-                                    return h - yScale(d) + 14;
+                                    return h - yScale(d.value) + 14;
                                 })
                                 .attr("font-family", "sans-serif")
                                 .attr("font-size", "11px")
@@ -148,9 +178,15 @@
                                     return xScale(i) + xScale.rangeBand() / 2;
                                 })
                                 .attr("y", function (d) {
-                                    return h - yScale(d) + 14;
+                                    return h - yScale(d.value) + 14;
                                 });
 
+                        // Exit...
+                        labels.exit()
+                                .transition()
+                                .duration(500)
+                                .attr("x", -xScale.rangeBand())
+                                .remove();
 
                     });
 
