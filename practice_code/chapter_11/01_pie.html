@@ -12,16 +12,17 @@
                 fill: white;
             }
 
+
 		</style>
 	</head>
 	<body>
 		<script type="text/javascript">
 
-			//Width and height
+            //Width and height
             var w = 300;
             var h = 300;
 
-            var dataset = [5, 10, 20, 45, 8, 25 ];
+            var dataset = [ 5, 10, 20, 45, 6, 25 ];
 
             var outerRadius = w / 2;
             var innerRadius = 0;
@@ -46,7 +47,7 @@
                     .enter()
                     .append("g")
                     .attr("class", "arc")
-                    .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+                    .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");   //set arc's point to be center on SVG
 
             //Draw arc paths
             arcs.append("path")
@@ -62,8 +63,9 @@
                     })
                     .attr("text-anchor", "middle")
                     .text(function (d) {
-                        return d.value;
+                        return d.value;     //be bound with pie(dataset)
                     });
+
 
 
 		</script>
